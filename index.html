@@ -3,19 +3,215 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>hello</title>
+  <title>404 - Page Not Found</title>
   <style>
     body {
-      background-color: black;
-      color: white;
-      font-family: sans-serif;
-      padding-top: 20px;
       margin: 0;
+      padding: 0;
+      height: 100vh;
+      background: #000;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
       text-align: center;
+      cursor: default;
+    }
+
+    h1, h2 {
+      margin: 0;
+      user-select: none;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+
+    p {
+      font-size: 1.2rem;
+      margin: 0;
+      color: #aaa;
+    }
+
+    h2#floating404 {
+      font-size: 4rem;
+      color: rgba(255, 255, 255, 0.8);
+      position: absolute;
+      cursor: grab;
+      transform-origin: center center;
+    }
+
+    .star {
+      position: absolute;
+      background: white;
+      border-radius: 50%;
+      animation: twinkle 2s infinite alternate;
+    }
+
+    @keyframes twinkle {
+      from { opacity: 0.2; }
+      to { opacity: 1; }
+    }
+
+    /* Bottom message */
+    #bottomMessage {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 1rem;
+      opacity: 0;
+      transition: opacity 1s ease;
+      pointer-events: none;
     }
   </style>
 </head>
 <body>
-  <h1>hello</h1>
+  <h1>Hello,</h1>
+  <p>Looks like you’re lost...</p>
+  <h2 id="floating404">404</h2>
+
+  <div id="bottomMessage">Maybe you're looking for this: <a href="http://archie.framer.media/" target="_blank" style="color:#0af;text-decoration:underline;">http://archie.framer.media/</a></div>
+
+  <script>
+    // ---------- Stars ----------
+    const stars = [];
+    const numStars = 150;
+
+    for (let i = 0; i < numStars; i++) {
+      const star = document.createElement('div');
+      star.classList.add('star');
+      const size = Math.random() * 2 + 1;
+      star.style.width = size + 'px';
+      star.style.height = size + 'px';
+      star.style.top = Math.random() * window.innerHeight + 'px';
+      star.style.left = Math.random() * window.innerWidth + 'px';
+      document.body.appendChild(star);
+
+      stars.push({
+        el: star,
+        x: parseFloat(star.style.left),
+        y: parseFloat(star.style.top),
+        dx: (Math.random() - 0.5) * 0.1,
+        dy: (Math.random() - 0.5) * 0.1
+      });
+    }
+
+    function animateStars() {
+      stars.forEach(star => {
+        star.x += star.dx;
+        star.y += star.dy;
+
+        if(star.x > window.innerWidth) star.x = 0;
+        if(star.x < 0) star.x = window.innerWidth;
+        if(star.y > window.innerHeight) star.y = 0;
+        if(star.y < 0) star.y = window.innerHeight;
+
+        star.el.style.left = star.x + 'px';
+        star.el.style.top = star.y + 'px';
+      });
+
+      requestAnimationFrame(animateStars);
+    }
+
+    animateStars();
+
+    // ---------- Draggable & Bounceable 404 ----------
+    const floating404 = document.getElementById('floating404');
+    let isDragging = false;
+    let offsetX = 0, offsetY = 0;
+    let velocityX = 0, velocityY = 0;
+    let rotation = 0;
+
+    const paragraph = document.querySelector('p');
+    let posX = window.innerWidth / 2 - floating404.offsetWidth / 2;
+    let posY = paragraph.offsetTop + paragraph.offsetHeight + 20; // Start below paragraph
+
+    floating404.style.left = posX + 'px';
+    floating404.style.top = posY + 'px';
+
+    floating404.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      offsetX = e.clientX - posX;
+      offsetY = e.clientY - posY;
+      velocityX = 0;
+      velocityY = 0;
+      floating404.style.cursor = 'grabbing';
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (isDragging) {
+        const newX = e.clientX - offsetX;
+        const newY = e.clientY - offsetY;
+
+        velocityX = newX - posX;
+        velocityY = newY - posY;
+
+        posX = newX;
+        posY = newY;
+        floating404.style.left = posX + 'px';
+        floating404.style.top = posY + 'px';
+      }
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (isDragging) {
+        isDragging = false;
+        floating404.style.cursor = 'grab';
+      }
+    });
+
+    function animate404() {
+      if (!isDragging) {
+        posX += velocityX;
+        posY += velocityY;
+
+        // Bounce off edges
+        if (posX + floating404.offsetWidth > window.innerWidth) {
+          posX = window.innerWidth - floating404.offsetWidth;
+          velocityX *= -1;
+        }
+        if (posX < 0) {
+          posX = 0;
+          velocityX *= -1;
+        }
+        if (posY + floating404.offsetHeight > window.innerHeight) {
+          posY = window.innerHeight - floating404.offsetHeight;
+          velocityY *= -1;
+        }
+        if (posY < 0) {
+          posY = 0;
+          velocityY *= -1;
+        }
+
+        velocityX *= 0.98;
+        velocityY *= 0.98;
+
+        rotation += (Math.random() - 0.5) * 0.3; // subtle wobble
+        floating404.style.transform = `rotate(${rotation}deg)`;
+
+        floating404.style.left = posX + 'px';
+        floating404.style.top = posY + 'px';
+      }
+
+      requestAnimationFrame(animate404);
+    }
+
+    animate404();
+
+    // ---------- Bottom message delay ----------
+    setTimeout(() => {
+      const msg = document.getElementById('bottomMessage');
+      msg.style.opacity = 1; // fade in
+    }, 2000); // 2-second delay
+  </script>
 </body>
 </html>
