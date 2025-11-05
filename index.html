@@ -43,21 +43,15 @@
       position: absolute;
       cursor: grab;
       transform-origin: center center;
+      pointer-events: auto;
     }
 
-    .star {
+    .star, .ripple-star {
       position: absolute;
       background: white;
       border-radius: 50%;
-      animation: twinkle 2s infinite alternate;
     }
 
-    @keyframes twinkle {
-      from { opacity: 0.2; }
-      to { opacity: 1; }
-    }
-
-    /* Bottom message */
     #bottomMessage {
       position: fixed;
       bottom: 20px;
@@ -91,69 +85,132 @@
 
   <div id="bottomMessage">
     Maybe you're looking for this: 
-    <a href="http://archie.framer.media/" target="_blank">
-      http://archie.framer.media/
+    <a href="https://archie.framer.media/" target="_blank">
+      archie.framer.media
     </a>
   </div>
 
   <script>
-    // ---------- Stars ----------
-    const stars = [];
-    const numStars = 150;
+    // ---------- Parallax Stars ----------
+    const layers = [
+      { stars: [], count: 100, speed: 0.02 }, // far, slower
+      { stars: [], count: 50, speed: 0.04 },  // middle
+      { stars: [], count: 30, speed: 0.06 }   // close
+    ];
 
-    for (let i = 0; i < numStars; i++) {
+    layers.forEach(layer => {
+      for (let i = 0; i < layer.count; i++) {
+        const star = document.createElement('div');
+        star.classList.add('star');
+        const size = Math.random() * 2 + 1;
+        star.style.width = size + 'px';
+        star.style.height = size + 'px';
+        star.style.top = Math.random() * window.innerHeight + 'px';
+        star.style.left = Math.random() * window.innerWidth + 'px';
+        document.body.appendChild(star);
+        layer.stars.push({
+          el: star,
+          x: parseFloat(star.style.left),
+          y: parseFloat(star.style.top),
+          dx: (Math.random()-0.5)*layer.speed,
+          dy: (Math.random()-0.5)*layer.speed
+        });
+      }
+    });
+
+    function animateStars() {
+      layers.forEach(layer => {
+        layer.stars.forEach(star => {
+          star.x += star.dx;
+          star.y += star.dy;
+          if(star.x > window.innerWidth) star.x = 0;
+          if(star.x < 0) star.x = window.innerWidth;
+          if(star.y > window.innerHeight) star.y = 0;
+          if(star.y < 0) star.y = window.innerHeight;
+          star.el.style.left = star.x + 'px';
+          star.el.style.top = star.y + 'px';
+        });
+      });
+      requestAnimationFrame(animateStars);
+    }
+    animateStars();
+
+    // ---------- Shooting Stars ----------
+    function createShootingStar() {
       const star = document.createElement('div');
       star.classList.add('star');
       const size = Math.random() * 2 + 1;
       star.style.width = size + 'px';
       star.style.height = size + 'px';
-      star.style.top = Math.random() * window.innerHeight + 'px';
-      star.style.left = Math.random() * window.innerWidth + 'px';
+      let x = Math.random() * window.innerWidth;
+      let y = Math.random() * window.innerHeight / 2;
+      star.style.left = x + 'px';
+      star.style.top = y + 'px';
       document.body.appendChild(star);
 
-      stars.push({
-        el: star,
-        x: parseFloat(star.style.left),
-        y: parseFloat(star.style.top),
-        dx: (Math.random() - 0.5) * 0.1,
-        dy: (Math.random() - 0.5) * 0.1
-      });
+      const dx = Math.random()*5+3;
+      const dy = Math.random()*2+1;
+
+      let life = 0;
+      function move() {
+        if(life > 100) { star.remove(); return; }
+        x += dx;
+        y += dy;
+        star.style.left = x + 'px';
+        star.style.top = y + 'px';
+        life++;
+        requestAnimationFrame(move);
+      }
+      move();
     }
 
-    function animateStars() {
-      stars.forEach(star => {
-        star.x += star.dx;
-        star.y += star.dy;
+    setInterval(() => { if(Math.random() < 0.05) createShootingStar(); }, 100);
 
-        if(star.x > window.innerWidth) star.x = 0;
-        if(star.x < 0) star.x = window.innerWidth;
-        if(star.y > window.innerHeight) star.y = 0;
-        if(star.y < 0) star.y = window.innerHeight;
+    // ---------- Click Ripple ----------
+    document.addEventListener('click', e => {
+      for(let i=0;i<10;i++){
+        const star = document.createElement('div');
+        star.classList.add('ripple-star');
+        const size = Math.random()*3+1;
+        star.style.width = size + 'px';
+        star.style.height = size + 'px';
+        star.style.left = e.clientX + 'px';
+        star.style.top = e.clientY + 'px';
+        document.body.appendChild(star);
 
-        star.el.style.left = star.x + 'px';
-        star.el.style.top = star.y + 'px';
-      });
-
-      requestAnimationFrame(animateStars);
-    }
-
-    animateStars();
+        const angle = Math.random()*2*Math.PI;
+        const speed = Math.random()*4+2;
+        let dx = Math.cos(angle)*speed;
+        let dy = Math.sin(angle)*speed;
+        let life = 0;
+        function animate() {
+          if(life>20){ star.remove(); return; }
+          const x = parseFloat(star.style.left) + dx;
+          const y = parseFloat(star.style.top) + dy;
+          star.style.left = x + 'px';
+          star.style.top = y + 'px';
+          star.style.opacity = 1 - life/20;
+          life++;
+          requestAnimationFrame(animate);
+        }
+        animate();
+      }
+    });
 
     // ---------- Draggable & Bounceable 404 ----------
     const floating404 = document.getElementById('floating404');
-    let isDragging = false;
-    let offsetX = 0, offsetY = 0;
+    let isDragging = false, offsetX = 0, offsetY = 0;
     let velocityX = 0, velocityY = 0;
     let rotation = 0;
 
     const paragraph = document.querySelector('p');
-    let posX = window.innerWidth / 2 - floating404.offsetWidth / 2;
-    let posY = paragraph.offsetTop + paragraph.offsetHeight + 20; // Start below paragraph
-
+    let posX = window.innerWidth/2 - floating404.offsetWidth/2;
+    let posY = paragraph.offsetTop + paragraph.offsetHeight + 20;
     floating404.style.left = posX + 'px';
     floating404.style.top = posY + 'px';
 
     floating404.addEventListener('mousedown', (e) => {
+      e.stopPropagation();
       isDragging = true;
       offsetX = e.clientX - posX;
       offsetY = e.clientY - posY;
@@ -163,13 +220,11 @@
     });
 
     document.addEventListener('mousemove', (e) => {
-      if (isDragging) {
+      if(isDragging){
         const newX = e.clientX - offsetX;
         const newY = e.clientY - offsetY;
-
         velocityX = newX - posX;
         velocityY = newY - posY;
-
         posX = newX;
         posY = newY;
         floating404.style.left = posX + 'px';
@@ -177,32 +232,32 @@
       }
     });
 
-    document.addEventListener('mouseup', () => {
-      if (isDragging) {
+    document.addEventListener('mouseup', (e) => {
+      if(isDragging){
+        e.stopPropagation();
         isDragging = false;
         floating404.style.cursor = 'grab';
       }
     });
 
-    function animate404() {
-      if (!isDragging) {
+    function animate404(){
+      if(!isDragging){
         posX += velocityX;
         posY += velocityY;
 
-        // Bounce off edges
-        if (posX + floating404.offsetWidth > window.innerWidth) {
+        if(posX + floating404.offsetWidth > window.innerWidth){
           posX = window.innerWidth - floating404.offsetWidth;
           velocityX *= -1;
         }
-        if (posX < 0) {
+        if(posX < 0){
           posX = 0;
           velocityX *= -1;
         }
-        if (posY + floating404.offsetHeight > window.innerHeight) {
+        if(posY + floating404.offsetHeight > window.innerHeight){
           posY = window.innerHeight - floating404.offsetHeight;
           velocityY *= -1;
         }
-        if (posY < 0) {
+        if(posY < 0){
           posY = 0;
           velocityY *= -1;
         }
@@ -210,23 +265,18 @@
         velocityX *= 0.98;
         velocityY *= 0.98;
 
-        rotation += (Math.random() - 0.5) * 0.3; // subtle wobble
+        rotation += (Math.random()-0.5)*0.3;
         floating404.style.transform = `rotate(${rotation}deg)`;
 
         floating404.style.left = posX + 'px';
         floating404.style.top = posY + 'px';
       }
-
       requestAnimationFrame(animate404);
     }
-
     animate404();
 
-    // ---------- Bottom message delay ----------
-    setTimeout(() => {
-      const msg = document.getElementById('bottomMessage');
-      msg.style.opacity = 1; // fade in
-    }, 2000); // 2-second delay
+    // ---------- Bottom Message ----------
+    setTimeout(()=>{document.getElementById('bottomMessage').style.opacity=1},2000);
   </script>
 </body>
 </html>
