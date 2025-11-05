@@ -93,9 +93,9 @@
   <script>
     // ---------- Parallax Stars ----------
     const layers = [
-      { stars: [], count: 100, speed: 0.02 }, // far, slower
-      { stars: [], count: 50, speed: 0.04 },  // middle
-      { stars: [], count: 30, speed: 0.06 }   // close
+      { stars: [], count: 100, speed: 0.02 },
+      { stars: [], count: 50, speed: 0.04 },
+      { stars: [], count: 30, speed: 0.06 }
     ];
 
     layers.forEach(layer => {
@@ -197,7 +197,7 @@
       }
     });
 
-    // ---------- Draggable & Bounceable 404 ----------
+    // ---------- Draggable & Bounceable 404 (Desktop + Mobile) ----------
     const floating404 = document.getElementById('floating404');
     let isDragging = false, offsetX = 0, offsetY = 0;
     let velocityX = 0, velocityY = 0;
@@ -209,42 +209,62 @@
     floating404.style.left = posX + 'px';
     floating404.style.top = posY + 'px';
 
-    floating404.addEventListener('mousedown', (e) => {
+    function getClientXY(e) {
+      if (e.touches) {
+        return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      } else {
+        return { x: e.clientX, y: e.clientY };
+      }
+    }
+
+    function startDrag(e) {
       e.stopPropagation();
       isDragging = true;
-      offsetX = e.clientX - posX;
-      offsetY = e.clientY - posY;
+      const { x, y } = getClientXY(e);
+      offsetX = x - posX;
+      offsetY = y - posY;
       velocityX = 0;
       velocityY = 0;
       floating404.style.cursor = 'grabbing';
-    });
+    }
 
-    document.addEventListener('mousemove', (e) => {
-      if(isDragging){
-        const newX = e.clientX - offsetX;
-        const newY = e.clientY - offsetY;
-        velocityX = newX - posX;
-        velocityY = newY - posY;
-        posX = newX;
-        posY = newY;
-        floating404.style.left = posX + 'px';
-        floating404.style.top = posY + 'px';
-      }
-    });
+    function dragMove(e) {
+      if (!isDragging) return;
+      e.preventDefault(); // prevent scrolling on mobile
+      const { x, y } = getClientXY(e);
+      const newX = x - offsetX;
+      const newY = y - offsetY;
+      velocityX = newX - posX;
+      velocityY = newY - posY;
+      posX = newX;
+      posY = newY;
+      floating404.style.left = posX + 'px';
+      floating404.style.top = posY + 'px';
+    }
 
-    document.addEventListener('mouseup', (e) => {
-      if(isDragging){
-        e.stopPropagation();
-        isDragging = false;
-        floating404.style.cursor = 'grab';
-      }
-    });
+    function endDrag(e) {
+      if (!isDragging) return;
+      e.stopPropagation();
+      isDragging = false;
+      floating404.style.cursor = 'grab';
+    }
+
+    // Mouse events
+    floating404.addEventListener('mousedown', startDrag);
+    document.addEventListener('mousemove', dragMove);
+    document.addEventListener('mouseup', endDrag);
+
+    // Touch events
+    floating404.addEventListener('touchstart', startDrag);
+    document.addEventListener('touchmove', dragMove, { passive: false });
+    document.addEventListener('touchend', endDrag);
 
     function animate404(){
       if(!isDragging){
         posX += velocityX;
         posY += velocityY;
 
+        // Bounce off edges
         if(posX + floating404.offsetWidth > window.innerWidth){
           posX = window.innerWidth - floating404.offsetWidth;
           velocityX *= -1;
@@ -262,8 +282,9 @@
           velocityY *= -1;
         }
 
-        velocityX *= 0.98;
-        velocityY *= 0.98;
+        // Apply friction
+        velocityX *= 0.95;
+        velocityY *= 0.95;
 
         rotation += (Math.random()-0.5)*0.3;
         floating404.style.transform = `rotate(${rotation}deg)`;
