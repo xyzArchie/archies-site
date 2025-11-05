@@ -70,7 +70,17 @@
       font-size: 1rem;
       opacity: 0;
       transition: opacity 1s ease;
-      pointer-events: none;
+      pointer-events: auto;
+    }
+
+    #bottomMessage a {
+      color: #0af;
+      text-decoration: underline;
+      transition: color 0.3s ease;
+    }
+
+    #bottomMessage a:hover {
+      color: #0ff;
     }
   </style>
 </head>
@@ -79,7 +89,12 @@
   <p>Looks like you’re lost...</p>
   <h2 id="floating404">404</h2>
 
-  <div id="bottomMessage">Maybe you're looking for this: <a href="http://archie.framer.media/" target="_blank" style="color:#0af;text-decoration:underline;">http://archie.framer.media/</a></div>
+  <div id="bottomMessage">
+    Maybe you're looking for this: 
+    <a href="http://archie.framer.media/" target="_blank">
+      http://archie.framer.media/
+    </a>
+  </div>
 
   <script>
     // ---------- Stars ----------
