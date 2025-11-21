@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Update In Progress</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      background: #000;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      text-align: center;
+      cursor: default;
+    }
+
+    h1, h2 {
+      margin: 0;
+      user-select: none;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+
+    p {
+      font-size: 1.2rem;
+      margin: 0;
+      color: #aaa;
+    }
+
+    .star, .ripple-star {
+      position: absolute;
+      background: white;
+      border-radius: 50%;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Update in progress</h1>
+  <p>Please check back soon.</p>
+
+  <script>
+    // ---------- Parallax Stars ----------
+    const layers = [
+      { stars: [], count: 100, speed: 0.02 },
+      { stars: [], count: 50, speed: 0.04 },
+      { stars: [], count: 30, speed: 0.06 }
+    ];
+
+    layers.forEach(layer => {
+      for (let i = 0; i < layer.count; i++) {
+        const star = document.createElement('div');
+        star.classList.add('star');
+        const size = Math.random() * 2 + 1;
+        star.style.width = size + 'px';
+        star.style.height = size + 'px';
+        star.style.top = Math.random() * window.innerHeight + 'px';
+        star.style.left = Math.random() * window.innerWidth + 'px';
+        document.body.appendChild(star);
+        layer.stars.push({
+          el: star,
+          x: parseFloat(star.style.left),
+          y: parseFloat(star.style.top),
+          dx: (Math.random()-0.5)*layer.speed,
+          dy: (Math.random()-0.5)*layer.speed
+        });
+      }
+    });
+
+    function animateStars() {
+      layers.forEach(layer => {
+        layer.stars.forEach(star => {
+          star.x += star.dx;
+          star.y += star.dy;
+          if(star.x > window.innerWidth) star.x = 0;
+          if(star.x < 0) star.x = window.innerWidth;
+          if(star.y > window.innerHeight) star.y = 0;
+          if(star.y < 0) star.y = window.innerHeight;
+          star.el.style.left = star.x + 'px';
+          star.el.style.top = star.y + 'px';
+        });
+      });
+      requestAnimationFrame(animateStars);
+    }
+    animateStars();
+
+    // ---------- Shooting Stars ----------
+    function createShootingStar() {
+      const star = document.createElement('div');
+      star.classList.add('star');
+      const size = Math.random() * 2 + 1;
+      star.style.width = size + 'px';
+      star.style.height = size + 'px';
+      let x = Math.random() * window.innerWidth;
+      let y = Math.random() * window.innerHeight / 2;
+      star.style.left = x + 'px';
+      star.style.top = y + 'px';
+      document.body.appendChild(star);
+
+      const dx = Math.random()*5+3;
+      const dy = Math.random()*2+1;
+
+      let life = 0;
+      function move() {
+        if(life > 100) { star.remove(); return; }
+        x += dx;
+        y += dy;
+        star.style.left = x + 'px';
+        star.style.top = y + 'px';
+        life++;
+        requestAnimationFrame(move);
+      }
+      move();
+    }
+
+    setInterval(() => { if(Math.random() < 0.05) createShootingStar(); }, 100);
+
+    // ---------- Click Ripple ----------
+    document.addEventListener('click', e => {
+      for(let i=0;i<10;i++){
+        const star = document.createElement('div');
+        star.classList.add('ripple-star');
+        const size = Math.random()*3+1;
+        star.style.width = size + 'px';
+        star.style.height = size + 'px';
+        star.style.left = e.clientX + 'px';
+        star.style.top = e.clientY + 'px';
+        document.body.appendChild(star);
+
+        const angle = Math.random()*2*Math.PI;
+        const speed = Math.random()*4+2;
+        let dx = Math.cos(angle)*speed;
+        let dy = Math.sin(angle)*speed;
+        let life = 0;
+        function animate() {
+          if(life>20){ star.remove(); return; }
+          const x = parseFloat(star.style.left) + dx;
+          const y = parseFloat(star.style.top) + dy;
+          star.style.left = x + 'px';
+          star.style.top = y + 'px';
+          star.style.opacity = 1 - life/20;
+          life++;
+          requestAnimationFrame(animate);
+        }
+        animate();
+      }
+    });
+  </script>
+
+</body>
+</html>
